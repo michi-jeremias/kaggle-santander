@@ -1,0 +1,2 @@
+DATAPATH = "files/"
+LOGPATH = "logs/"
