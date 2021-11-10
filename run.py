@@ -2,10 +2,8 @@
 
 # Imports
 import importlib
-import torch.nn as nn  # Circular import in santander.model? maybe
-# solve with __init__.py
+import torch.nn as nn
 import torch.optim as optim
-from sklearn import metrics
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
@@ -14,7 +12,7 @@ from santander.model import NN2
 # from deeplearning.model.init import init_normal, init_xavier
 # from deeplearning.trainer.trainer import Trainer
 
-import deeplearning.trainer
+import deeplearning.runner
 
 from deeplearning.metric import RocAuc
 from deeplearning.reporter import ConsoleReporter
