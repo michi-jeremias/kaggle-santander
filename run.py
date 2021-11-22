@@ -5,9 +5,9 @@ import importlib
 
 import torch.nn as nn
 import torch.optim as optim
-from deeplearning.metric import RocAuc
+from deeplearning.metric import RocAuc, BinaryCrossentropy
 from deeplearning.modelinit import init_xavier
-from deeplearning.reporter import ConsoleReporter, TensorboardReporter
+from deeplearning.reporter import ConsoleReporter, TensorboardHparamReporter
 from deeplearning.runner_mediator import Trainer, Validator, Runner
 from torch.utils.data import DataLoader
 
@@ -16,7 +16,8 @@ from santander.model import NN2
 
 # Hyperparameters
 BATCH_SIZE = 1024
-# BATCH_SIZE = 128
+BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 
 # Data
@@ -48,16 +49,25 @@ optimizer = optim.Adam(
     weight_decay=1e-4
 )
 
-# Metric reporter
+# Reporter
 console_train = ConsoleReporter(name="Train")
+hparam = {
+    "batchsize": 256,
+    "lr": 2e-3
+}
+tb_train = TensorboardHparamReporter(name="Train", hparam=hparam)
+console_val = ConsoleReporter(name="Val")
+
+# Metrics
 rocauc_train = RocAuc()
 rocauc_train.subscribe(console_train)
-console_val = ConsoleReporter(name="Val")
+rocauc_train.subscribe(tb_train)
+bce_train = BinaryCrossentropy()
+bce_train.subscribe(console_train)
+bce_train.subscribe(tb_train)
+
 rocauc_val = RocAuc()
 rocauc_val.subscribe(console_val)
-
-tb_train = TensorboardReporter(name="Train")
-rocauc_train.subscribe(tb_train)
 
 
 loss_fn = nn.BCELoss()
@@ -91,7 +101,7 @@ RUNNER = Runner(
 
 RUNNER.train()
 RUNNER.validate()
-RUNNER.run()
+RUNNER.run(10)
 
 
 # Export
@@ -99,8 +109,9 @@ get_submission(
     model=TRAINER.model,
     loader=test_loader,
     test_ids=test_ids,
-    device="cuda",
-    filename="sub-20210927.csv")
+    # device="cuda",
+    device="cpu",
+    filename="sub-20211122.csv")
 
 
 del(TRAINER)
