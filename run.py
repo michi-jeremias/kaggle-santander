@@ -15,9 +15,13 @@ from santander.auxiliary import get_data, get_submission
 from santander.model import NN2
 
 # Hyperparameters
-BATCH_SIZE = 1024
-BATCH_SIZE = 256
-BATCH_SIZE = 128
+# BATCH_SIZE = 1024
+# BATCH_SIZE = 256
+# BATCH_SIZE = 128
+hparam = {
+    "batchsize": 256,
+    "lr": 2e-3
+}
 
 
 # Data
@@ -31,30 +35,26 @@ train_ds, val_ds, test_ds, test_ids = get_data(
     submission=True)
 train_loader = DataLoader(
     dataset=train_ds,
-    batch_size=BATCH_SIZE,
+    batch_size=hparam["batchsize"],
     shuffle=True)
 val_loader = DataLoader(
     dataset=val_ds,
-    batch_size=BATCH_SIZE)
+    batch_size=hparam["batchsize"])
 test_loader = DataLoader(
     dataset=test_ds,
-    batch_size=BATCH_SIZE)
+    batch_size=hparam["batchsize"])
 
 # Model, Optimizer
 model = NN2(input_size=400, hidden_dim=100)
 init_xavier(model)
 optimizer = optim.Adam(
     params=model.parameters(),
-    lr=2e-3,
+    lr=hparam["lr"],
     weight_decay=1e-4
 )
 
 # Reporter
 console_train = ConsoleReporter(name="Train")
-hparam = {
-    "batchsize": 256,
-    "lr": 2e-3
-}
 tb_train = TensorboardHparamReporter(name="Train", hparam=hparam)
 console_val = ConsoleReporter(name="Val")
 
@@ -76,7 +76,8 @@ loss_fn = nn.BCELoss()
 # Trainer
 TRAINER = Trainer(
     loader=train_loader,
-    metrics=rocauc_train
+    batch_metrics=bce_train,
+    epoch_metrics=rocauc_train
 )
 
 VAL = Validator(
