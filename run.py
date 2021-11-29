@@ -106,7 +106,7 @@ RUNNER.run(10)
 
 # Export
 get_submission(
-    model=TRAINER.model,
+    model=RUNNER.model,
     loader=test_loader,
     test_ids=test_ids,
     # device="cuda",
