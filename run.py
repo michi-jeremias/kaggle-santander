@@ -70,6 +70,7 @@ rocauc_val = RocAuc()
 rocauc_val.subscribe(console_val)
 
 
+# Loss function
 loss_fn = nn.BCELoss()
 
 
