@@ -103,7 +103,7 @@ RUNNER = Runner(
 
 RUNNER.train()
 RUNNER.validate()
-RUNNER.run(10)
+RUNNER.run(3)
 
 
 # Export
