@@ -1,6 +1,7 @@
 """Kaggle competition: Santander customer transaction prediction"""
 
 # Imports
+from itertools import product
 import importlib
 
 import torch.nn as nn
@@ -19,8 +20,8 @@ from santander.model import NN2
 # BATCH_SIZE = 256
 # BATCH_SIZE = 128
 hparam = {
-    "batchsize": 256,
-    "lr": 2e-3
+    "batchsize": [128, 1024],
+    "lr": [2e-3, 2e-4]
 }
 
 
@@ -118,3 +119,7 @@ get_submission(
 
 del(TRAINER)
 importlib.reload(deeplearning.runner_strategy)
+
+
+k, v = zip(*hparam.items())
+prod = product(hparam["batchsize"], hparam["lr"])
