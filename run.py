@@ -6,10 +6,10 @@ import importlib
 
 import torch.nn as nn
 import torch.optim as optim
-from deeplearning.metric import RocAuc, BinaryCrossentropy
-from deeplearning.modelinit import init_xavier
-from deeplearning.reporter import ConsoleReporter, TensorboardHparamReporter
-from deeplearning.runner_mediator import Trainer, Validator, Runner
+from tinydl.metric import RocAuc, BinaryCrossentropy
+from tinydl.modelinit import init_xavier
+from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter
+from tinydl.runner_mediator import Trainer, Validator, Runner
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
