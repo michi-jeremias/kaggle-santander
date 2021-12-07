@@ -1,31 +1,30 @@
 """Kaggle competition: Santander customer transaction prediction"""
 
 # Imports
-from itertools import product
 import importlib
 
 import torch.nn as nn
 import torch.optim as optim
-from tinydl.metric import RocAuc, BinaryCrossentropy
+from tinydl.hyperparameter import Hyperparameter
+from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
 from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter
-from tinydl.runner_mediator import Trainer, Validator, Runner
+from tinydl.runner_mediator import Runner, Trainer, Validator
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
 from santander.model import NN2
 
 # Hyperparameters
-# BATCH_SIZE = 1024
-# BATCH_SIZE = 256
-# BATCH_SIZE = 128
 hparam = {
     "batchsize": [128, 1024],
     "lr": [2e-3, 2e-4]
 }
 
+hyper = Hyperparameter(hparam)
+experiment = next(hyper.get_experiment())
 
-# Data
+# Dataset
 train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/aug_train.csv",
     test="files/aug_test.csv",
@@ -34,29 +33,31 @@ train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/tiny_train.csv",
     test="files/tiny_test.csv",
     submission=True)
+
+# DataLoader
 train_loader = DataLoader(
     dataset=train_ds,
-    batch_size=hparam["batchsize"],
+    batch_size=experiment["batchsize"],
     shuffle=True)
 val_loader = DataLoader(
     dataset=val_ds,
-    batch_size=hparam["batchsize"])
+    batch_size=experiment["batchsize"])
 test_loader = DataLoader(
     dataset=test_ds,
-    batch_size=hparam["batchsize"])
+    batch_size=experiment["batchsize"])
 
 # Model, Optimizer
 model = NN2(input_size=400, hidden_dim=100)
 init_xavier(model)
 optimizer = optim.Adam(
     params=model.parameters(),
-    lr=hparam["lr"],
+    lr=experiment["lr"],
     weight_decay=1e-4
 )
 
 # Reporter
 console_train = ConsoleReporter(name="Train")
-tb_train = TensorboardHparamReporter(name="Train", hparam=hparam)
+tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
 console_val = ConsoleReporter(name="Val")
 
 # Metrics
@@ -79,7 +80,8 @@ loss_fn = nn.BCELoss()
 TRAINER = Trainer(
     loader=train_loader,
     batch_metrics=bce_train,
-    epoch_metrics=rocauc_train
+    # epoch_metrics=rocauc_train
+    epoch_metrics=[]
 )
 
 VAL = Validator(
@@ -118,7 +120,7 @@ get_submission(
 
 
 del(TRAINER)
-importlib.reload(deeplearning.runner_strategy)
+importlib.reload(tinydl.runner_mediator)
 
 
 k, v = zip(*hparam.items())
