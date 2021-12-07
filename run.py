@@ -81,7 +81,9 @@ TRAINER = Trainer(
     loader=train_loader,
     batch_metrics=bce_train,
     # epoch_metrics=rocauc_train
-    epoch_metrics=[]
+    epoch_metrics=[],
+    optimizer=optimizer,
+    loss_fn=loss_fn
 )
 
 VAL = Validator(
@@ -121,7 +123,3 @@ get_submission(
 
 del(TRAINER)
 importlib.reload(tinydl.runner_mediator)
-
-
-k, v = zip(*hparam.items())
-prod = product(hparam["batchsize"], hparam["lr"])
