@@ -15,14 +15,6 @@ from torch.utils.data import DataLoader
 from santander.auxiliary import get_data, get_submission
 from santander.model import NN2
 
-# Hyperparameters
-hparam = {
-    "batchsize": [128, 1024],
-    "lr": [2e-3, 2e-4]
-}
-
-hyper = Hyperparameter(hparam)
-experiment = next(hyper.get_experiment())
 
 # Dataset
 train_ds, val_ds, test_ds, test_ids = get_data(
@@ -34,81 +26,75 @@ train_ds, val_ds, test_ds, test_ids = get_data(
     test="files/tiny_test.csv",
     submission=True)
 
-# DataLoader
-train_loader = DataLoader(
-    dataset=train_ds,
-    batch_size=experiment["batchsize"],
-    shuffle=True)
-val_loader = DataLoader(
-    dataset=val_ds,
-    batch_size=experiment["batchsize"])
-test_loader = DataLoader(
-    dataset=test_ds,
-    batch_size=experiment["batchsize"])
-
-# Model, Optimizer
-model = NN2(input_size=400, hidden_dim=100)
-init_xavier(model)
-optimizer = optim.Adam(
-    params=model.parameters(),
-    lr=experiment["lr"],
-    weight_decay=1e-4
-)
-
-# Reporter
-console_train = ConsoleReporter(name="Train")
-tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
-console_val = ConsoleReporter(name="Val")
-
-# Metrics
-rocauc_train = RocAuc()
-rocauc_train.subscribe(console_train)
-rocauc_train.subscribe(tb_train)
-bce_train = BinaryCrossentropy()
-bce_train.subscribe(console_train)
-bce_train.subscribe(tb_train)
-
-rocauc_val = RocAuc()
-rocauc_val.subscribe(console_val)
-
-
 # Loss function
 loss_fn = nn.BCELoss()
 
 
-# Trainer
-TRAINER = Trainer(
-    loader=train_loader,
-    batch_metrics=bce_train,
-    # epoch_metrics=rocauc_train
-    epoch_metrics=[],
-    optimizer=optimizer,
-    loss_fn=loss_fn
-)
+# Hyperparameters
+hparam = {
+    "batchsize": [128, 1024],
+    "lr": [2e-3, 2e-4]
+}
 
-VAL = Validator(
-    loader=val_loader,
-    metrics=rocauc_val
-)
+hyper = Hyperparameter(hparam)
+# experiment = next(hyper.get_experiment())
 
-RUNNER = Runner(
-    model=model,
-    optimizer=optimizer,
-    loss_fn=loss_fn,
-    trainer=TRAINER,
-    validator=VAL
-)
+for experiment in hyper.get_experiment():
+    # DataLoader
+    train_loader = DataLoader(
+        dataset=train_ds,
+        batch_size=experiment["batchsize"],
+        shuffle=True)
+    val_loader = DataLoader(
+        dataset=val_ds,
+        batch_size=experiment["batchsize"])
+    test_loader = DataLoader(
+        dataset=test_ds,
+        batch_size=experiment["batchsize"])
+    # Model, Optimizer
+    model = NN2(input_size=400, hidden_dim=100)
+    init_xavier(model)
+    optimizer = optim.Adam(
+        params=model.parameters(),
+        lr=experiment["lr"],
+        weight_decay=1e-4
+    )
+    # Reporter
+    console_train = ConsoleReporter(name="Train")
+    tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
+    console_val = ConsoleReporter(name="Val")
 
-RUNNER = Runner(
-    model=model,
-    optimizer=optimizer,
-    loss_fn=loss_fn,
-    trainer=TRAINER
-)
+    # Metrics
+    rocauc_train = RocAuc()
+    rocauc_train.subscribe(console_train)
+    rocauc_train.subscribe(tb_train)
+    bce_train = BinaryCrossentropy()
+    bce_train.subscribe(console_train)
+    bce_train.subscribe(tb_train)
 
-RUNNER.train()
-RUNNER.validate()
-RUNNER.run(3)
+    rocauc_val = RocAuc()
+    rocauc_val.subscribe(console_val)
+
+    TRAINER = Trainer(
+        loader=train_loader,
+        batch_metrics=[],
+        # epoch_metrics=rocauc_train
+        epoch_metrics=[bce_train, rocauc_train],
+        optimizer=optimizer,
+        loss_fn=loss_fn
+    )
+
+    VAL = Validator(
+        loader=val_loader,
+        metrics=rocauc_val
+    )
+
+    RUNNER = Runner(
+        model=model,
+        trainer=TRAINER
+    )
+
+    RUNNER.run(3)
 
 
 # Export
