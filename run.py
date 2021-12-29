@@ -9,7 +9,7 @@ from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
 from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter
-from tinydl.runner_mediator import Runner, Trainer, Validator
+from tinydl.runner import Runner, Trainer, Validator
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
