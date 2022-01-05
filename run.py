@@ -5,8 +5,6 @@ import importlib
 
 import torch.nn as nn
 import torch.optim as optim
-from tinydl import Hyperparameter
-import tinydl
 from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
