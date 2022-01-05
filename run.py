@@ -39,9 +39,71 @@ hparam = {
 }
 
 hyper = Hyperparameter(hparam)
-# experiment = next(hyper.get_experiment())
 
+#################
+experiment = next(hyper.get_experiment())
+
+train_loader = DataLoader(
+    dataset=train_ds,
+    batch_size=experiment["batchsize"],
+    shuffle=True)
+val_loader = DataLoader(
+    dataset=val_ds,
+    batch_size=experiment["batchsize"])
+test_loader = DataLoader(
+    dataset=test_ds,
+    batch_size=experiment["batchsize"])
+
+model = NN2(input_size=400, hidden_dim=100)
+init_xavier(model)
+optimizer = optim.Adam(
+    params=model.parameters(),
+    lr=experiment["lr"],
+    weight_decay=1e-4
+)
+
+console_train = ConsoleReporter(name="Train")
+tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
+
+rocauc_train = RocAuc()
+rocauc_train.subscribe(console_train)
+rocauc_train.subscribe(tb_train)
+bce_train = BinaryCrossentropy()
+bce_train.subscribe(console_train)
+bce_train_batch = BinaryCrossentropy()
+bce_train_batch.subscribe(tb_train)
+
+
+console_val = ConsoleReporter(name="Val")
+rocauc_val = RocAuc()
+rocauc_val.subscribe(console_val)
+
+TRAINER = Trainer(
+    loader=train_loader,
+    optimizer=optimizer,
+    loss_fn=loss_fn,
+    batch_metrics=bce_train_batch,
+    # epoch_metrics=rocauc_train
+    epoch_metrics=[bce_train, rocauc_train],
+)
+
+VAL = Validator(
+    loader=val_loader,
+    batch_metrics=[],
+    epoch_metrics=rocauc_val
+)
+
+RUNNER = Runner(
+    model=model,
+    trainer=TRAINER,
+    validator=VAL
+)
+
+RUNNER.run(3)
+
+#####################################
 for experiment in hyper.get_experiment():
+
     # DataLoader
     train_loader = DataLoader(
         dataset=train_ds,
@@ -53,6 +115,7 @@ for experiment in hyper.get_experiment():
     test_loader = DataLoader(
         dataset=test_ds,
         batch_size=experiment["batchsize"])
+
     # Model, Optimizer
     model = NN2(input_size=400, hidden_dim=100)
     init_xavier(model)
@@ -61,6 +124,7 @@ for experiment in hyper.get_experiment():
         lr=experiment["lr"],
         weight_decay=1e-4
     )
+
     # Reporter
     console_train = ConsoleReporter(name="Train")
     tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
@@ -77,23 +141,25 @@ for experiment in hyper.get_experiment():
     rocauc_val = RocAuc()
     rocauc_val.subscribe(console_val)
 
+    # Trainer, Validator, Runner
     TRAINER = Trainer(
         loader=train_loader,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
         batch_metrics=[],
         # epoch_metrics=rocauc_train
         epoch_metrics=[bce_train, rocauc_train],
-        optimizer=optimizer,
-        loss_fn=loss_fn
     )
 
     VAL = Validator(
         loader=val_loader,
-        metrics=rocauc_val
+        batch_metrics=rocauc_val
     )
 
     RUNNER = Runner(
         model=model,
-        trainer=TRAINER
+        trainer=TRAINER,
+        validator=VAL
     )
 
     RUNNER.run(3)
