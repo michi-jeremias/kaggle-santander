@@ -100,7 +100,8 @@ RUNNER = Runner(
 RUNNER.run(3)
 
 #####################################
-for experiment in hyper.get_experiment():
+for num_experiment, experiment in enumerate(hyper.get_experiment()):
+    print(num_experiment, experiment)
 
     # DataLoader
     train_loader = DataLoader(
