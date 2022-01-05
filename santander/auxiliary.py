@@ -14,7 +14,7 @@ from torch.utils.data import TensorDataset
 from torch.utils.data.dataset import random_split
 
 # from data.augmenter import HasUniqueGenerator, IsUniqueGenerator
-from tinydl.data.augmenter import HasUniqueGenerator, IsUniqueGenerator
+from tinydl.data import HasUniqueGenerator, IsUniqueGenerator
 # from deeplearning.data.const import DATAPATH, LOGPATH
 
 from santander.const import DATAPATH
