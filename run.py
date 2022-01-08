@@ -21,10 +21,10 @@ train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/aug_train.csv",
     test="files/aug_test.csv",
     submission=True)
-train_ds, val_ds, test_ds, test_ids = get_data(
-    train="files/tiny_train.csv",
-    test="files/tiny_test.csv",
-    submission=True)
+# train_ds, val_ds, test_ds, test_ids = get_data(
+#     train="files/tiny_train.csv",
+#     test="files/tiny_test.csv",
+#     submission=True)
 
 # Loss function
 loss_fn = nn.BCELoss()
@@ -101,7 +101,7 @@ RUNNER.run(3)
 
 #####################################
 for num_experiment, experiment in enumerate(hyper.get_experiment()):
-    print(num_experiment, experiment)
+    print(num_experiment+1, experiment)
 
     # DataLoader
     train_loader = DataLoader(
@@ -125,35 +125,67 @@ for num_experiment, experiment in enumerate(hyper.get_experiment()):
     )
 
     # Reporter
-    console_train = ConsoleReporter(name="Train")
-    tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
-    console_val = ConsoleReporter(name="Val")
+    console_reporter = ConsoleReporter(name="Console Reporter")
+    # console_train = ConsoleReporter(name="Train")
+    tensorboard_reporter = TensorboardHparamReporter(hparam=experiment)
+    # tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
+    # console_val = ConsoleReporter(name="Val")
 
     # Metrics
-    rocauc_train = RocAuc()
-    rocauc_train.subscribe(console_train)
-    rocauc_train.subscribe(tb_train)
-    bce_train = BinaryCrossentropy()
-    bce_train.subscribe(console_train)
-    bce_train.subscribe(tb_train)
+    train_rocauc = RocAuc().subscribe(console_reporter)
+    # epoch_bce = BinaryCrossentropy()
+    epoch_bce_val = BinaryCrossentropy()
+    epoch_bce_val.name = "BCE VAL"
+    epoch_bce_train = BinaryCrossentropy()
+    epoch_bce_val.subscribe(console_reporter)
+    epoch_bce_train.name = "BCE TRAIN"
+    epoch_bce_train.subscribe(console_reporter)
+    # batch_bce = BinaryCrossentropy()
+    # batch_bce.subscribe(tensorboard_reporter)
+    # # epoch_train_rocauc = RocAuc()
+    # # epoch_train_rocauc.subscribe(console_train)
 
-    rocauc_val = RocAuc()
-    rocauc_val.subscribe(console_val)
+    # bce_train = BinaryCrossentropy()
+    # bce_train.subscribe(console_train)
+    # bce_train_batch = BinaryCrossentropy()
+    # bce_train_batch.subscribe(tb_train)
+
+    # rocauc_val = RocAuc()
+    # rocauc_val.subscribe(console_val)
 
     # Trainer, Validator, Runner
     TRAINER = Trainer(
         loader=train_loader,
         optimizer=optimizer,
         loss_fn=loss_fn,
-        batch_metrics=[],
-        # epoch_metrics=rocauc_train
-        epoch_metrics=[bce_train, rocauc_train],
+        # batch_metrics=[batch_bce],
+        epoch_metrics=[epoch_bce_train],
     )
 
     VAL = Validator(
         loader=val_loader,
-        batch_metrics=rocauc_val
+        epoch_metrics=[epoch_bce_val]
     )
+
+    # RUNNER = Runner(
+    #     model=model,
+    #     trainer=TRAINER,
+    #     validator=VAL
+    # )
+
+    # TRAINER = Trainer(
+    #     loader=train_loader,
+    #     optimizer=optimizer,
+    #     loss_fn=loss_fn,
+    #     batch_metrics=bce_train_batch,
+    #     epoch_metrics=[bce_train, rocauc_train],
+    # )
+
+    # VAL = Validator(
+    #     loader=val_loader,
+    #     batch_metrics=[],
+    #     epoch_metrics=rocauc_val
+    # )
 
     RUNNER = Runner(
         model=model,
