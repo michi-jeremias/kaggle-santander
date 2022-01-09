@@ -35,6 +35,10 @@ hparam = {
     "batchsize": [128, 1024],
     "lr": [2e-3, 2e-4]
 }
+hparam = {
+    "batchsize": [128],
+    "lr": [2e-4]
+}
 
 hyper = Hyperparameter(hparam)
 
@@ -101,7 +105,7 @@ RUNNER.run(3)
 
 #####################################
 for num_experiment, experiment in enumerate(hyper.get_experiment()):
-    print(num_experiment+1, experiment)
+    print(f"Experiment: {num_experiment+1}, Config: {experiment}")
 
     # DataLoader
     train_loader = DataLoader(
@@ -126,45 +130,34 @@ for num_experiment, experiment in enumerate(hyper.get_experiment()):
 
     # Reporter
     console_reporter = ConsoleReporter(name="Console Reporter")
-    # console_train = ConsoleReporter(name="Train")
     tensorboard_reporter = TensorboardHparamReporter(hparam=experiment)
-    # tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
-    # console_val = ConsoleReporter(name="Val")
 
     # Metrics
-    train_rocauc = RocAuc().subscribe(console_reporter)
-    # epoch_bce = BinaryCrossentropy()
-    epoch_bce_val = BinaryCrossentropy()
-    epoch_bce_val.name = "BCE VAL"
-    epoch_bce_train = BinaryCrossentropy()
-    epoch_bce_val.subscribe(console_reporter)
-    epoch_bce_train.name = "BCE TRAIN"
-    epoch_bce_train.subscribe(console_reporter)
-    # batch_bce = BinaryCrossentropy()
-    # batch_bce.subscribe(tensorboard_reporter)
-    # # epoch_train_rocauc = RocAuc()
-    # # epoch_train_rocauc.subscribe(console_train)
+    bce_train = BinaryCrossentropy(name="BCE TRAIN")
+    bce_train.subscribe(console_reporter)
+    bce_train.subscribe(tensorboard_reporter)
 
-    # bce_train = BinaryCrossentropy()
-    # bce_train.subscribe(console_train)
-    # bce_train_batch = BinaryCrossentropy()
-    # bce_train_batch.subscribe(tb_train)
+    rocauc_train = RocAuc(name="ROCAUC TRAIN")
+    rocauc_train.subscribe(console_reporter)
 
-    # rocauc_val = RocAuc()
-    # rocauc_val.subscribe(console_val)
+    bce_val = BinaryCrossentropy(name="BCE VAL")
+    bce_val.subscribe(console_reporter)
+
+    rocauc_val = RocAuc(name="ROCAUC VAL")
+    rocauc_val.subscribe(console_reporter)
 
     # Trainer, Validator, Runner
     TRAINER = Trainer(
         loader=train_loader,
         optimizer=optimizer,
         loss_fn=loss_fn,
-        # batch_metrics=[batch_bce],
-        epoch_metrics=[epoch_bce_train],
+        batch_metrics=[bce_train],
+        epoch_metrics=[bce_train, rocauc_train],
     )
 
     VAL = Validator(
         loader=val_loader,
-        epoch_metrics=[epoch_bce_val]
+        epoch_metrics=[bce_val, rocauc_val]
     )
 
     # RUNNER = Runner(
