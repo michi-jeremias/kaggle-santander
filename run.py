@@ -10,6 +10,7 @@ from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
 from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter
 from tinydl.runner import Runner, Trainer, Validator
+from tinydl.stage import Stage
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
@@ -129,21 +130,21 @@ for num_experiment, experiment in enumerate(hyper.get_experiment()):
     )
 
     # Reporter
-    console_reporter = ConsoleReporter(name="Console Reporter")
+    console_reporter = ConsoleReporter()
     tensorboard_reporter = TensorboardHparamReporter(hparam=experiment)
 
     # Metrics
-    bce_train = BinaryCrossentropy(name="BCE TRAIN")
+    bce_train = BinaryCrossentropy()
     bce_train.subscribe(console_reporter)
     bce_train.subscribe(tensorboard_reporter)
 
-    rocauc_train = RocAuc(name="ROCAUC TRAIN")
+    rocauc_train = RocAuc()
     rocauc_train.subscribe(console_reporter)
 
-    bce_val = BinaryCrossentropy(name="BCE VAL")
+    bce_val = BinaryCrossentropy()
     bce_val.subscribe(console_reporter)
 
-    rocauc_val = RocAuc(name="ROCAUC VAL")
+    rocauc_val = RocAuc()
     rocauc_val.subscribe(console_reporter)
 
     # Trainer, Validator, Runner
@@ -151,7 +152,7 @@ for num_experiment, experiment in enumerate(hyper.get_experiment()):
         loader=train_loader,
         optimizer=optimizer,
         loss_fn=loss_fn,
-        batch_metrics=[bce_train],
+        batch_metrics=[],
         epoch_metrics=[bce_train, rocauc_train],
     )
 
@@ -186,7 +187,7 @@ for num_experiment, experiment in enumerate(hyper.get_experiment()):
         validator=VAL
     )
 
-    RUNNER.run(3)
+    RUNNER.run(1)
 
 
 # Export
