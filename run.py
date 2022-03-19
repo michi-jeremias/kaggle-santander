@@ -8,7 +8,7 @@ import torch.optim as optim
 from tinydl.hyperparameter import Hyperparameter
 from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
-from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter
+from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter, TensorboardScalarReporter
 from tinydl.runner import Runner, Trainer, Validator
 from tinydl.stage import Stage
 from torch.utils.data import DataLoader
@@ -67,19 +67,25 @@ optimizer = optim.Adam(
 
 console_train = ConsoleReporter(name="Train")
 tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
+tb_scalar_train = TensorboardScalarReporter(name="Train", hparam=experiment)
 
 rocauc_train = RocAuc()
 rocauc_train.subscribe(console_train)
 rocauc_train.subscribe(tb_train)
+
 bce_train = BinaryCrossentropy()
 bce_train.subscribe(console_train)
+
 bce_train_batch = BinaryCrossentropy()
+bce_train_batch.subscribe(tb_scalar_train)
 bce_train_batch.subscribe(tb_train)
 
 
-console_val = ConsoleReporter(name="Val")
-rocauc_val = RocAuc()
-rocauc_val.subscribe(console_val)
+console_val = ConsoleReporter(name="Valid")
+bce_val = BinaryCrossentropy()
+bce_val.subscribe(console_val)
+# rocauc_val = RocAuc()
+# rocauc_val.subscribe(console_val)
 
 TRAINER = Trainer(
     loader=train_loader,
@@ -87,13 +93,13 @@ TRAINER = Trainer(
     loss_fn=loss_fn,
     batch_metrics=bce_train_batch,
     # epoch_metrics=rocauc_train
-    epoch_metrics=[bce_train, rocauc_train],
+    epoch_metrics=bce_train,
 )
 
 VAL = Validator(
     loader=val_loader,
     batch_metrics=[],
-    epoch_metrics=rocauc_val
+    epoch_metrics=bce_val
 )
 
 RUNNER = Runner(
