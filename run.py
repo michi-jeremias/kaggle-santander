@@ -22,10 +22,10 @@ train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/aug_train.csv",
     test="files/aug_test.csv",
     submission=True)
-# train_ds, val_ds, test_ds, test_ids = get_data(
-#     train="files/tiny_train.csv",
-#     test="files/tiny_test.csv",
-#     submission=True)
+train_ds, val_ds, test_ds, test_ids = get_data(
+    train="files/tiny_train.csv",
+    test="files/tiny_test.csv",
+    submission=True)
 
 # Loss function
 loss_fn = nn.BCELoss()
