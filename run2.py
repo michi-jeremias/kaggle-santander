@@ -6,12 +6,10 @@ import importlib
 import torch.nn as nn
 import torch.optim as optim
 from tinydl.hyperparameter import Hyperparameter
-from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.metric2 import BinaryCrossentropy2, RocAuc2
 from tinydl.modelinit import init_xavier
-from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter, TensorboardScalarReporter
 from tinydl.reporter2 import ConsoleReporter2, TensorboardHparamReporter2, TensorboardScalarReporter2
-from tinydl.runner import Runner, Trainer, Validator
+from tinydl.runner2 import Runner2, Trainer2, Validator2
 from tinydl.stage import Stage
 from torch.utils.data import DataLoader
 
@@ -67,50 +65,64 @@ optimizer = optim.Adam(
     weight_decay=1e-4
 )
 
-console_train = ConsoleReporter(name="Train")
-tb_train = TensorboardHparamReporter(name="Train", hparam=experiment)
-tb_scalar_train = TensorboardScalarReporter(name="Train", hparam=experiment)
+bce_train_batch = BinaryCrossentropy2()
+# console_reporter = ConsoleReporter2()
+# console_reporter.subscribe(bce_train_batch)
+tbscalar_reporter = TensorboardScalarReporter2(
+    stage=Stage.TRAIN, hparam=hparam)
+tbscalar_reporter.subscribe(bce_train_batch)
 
-rocauc_train = RocAuc()
-rocauc_train.subscribe(console_train)
-rocauc_train.subscribe(tb_train)
-
-bce_train = BinaryCrossentropy()
-bce_train.subscribe(console_train)
-
-bce_train_batch = BinaryCrossentropy()
-bce_train_batch.subscribe(tb_scalar_train)
-bce_train_batch.subscribe(tb_train)
+bce_train_hparam = BinaryCrossentropy2()
+tbhparam_reporter = TensorboardHparamReporter2(
+    stage=Stage.TRAIN, hparam=hparam)
+tbhparam_reporter.subscribe(bce_train_hparam)
 
 
-console_val = ConsoleReporter(name="Valid")
-bce_val = BinaryCrossentropy()
-bce_val.subscribe(console_val)
+# console_train = ConsoleReporter2(name="Train")
+# tb_train = TensorboardHparamReporter2(name="Train", hparam=experiment)
+# tb_scalar_train = TensorboardScalarReporter2(name="Train", hparam=experiment)
+
+# rocauc_train = RocAuc2()
+# rocauc_train.subscribe(console_train)
+# rocauc_train.subscribe(tb_train)
+
+# bce_train = BinaryCrossentropy2()
+# bce_train.subscribe(console_train)
+
+# bce_train_batch = BinaryCrossentropy2()
+# bce_train_batch.subscribe(tb_scalar_train)
+# bce_train_batch.subscribe(tb_train)
+
+
+# console_val = ConsoleReporter(name="Valid")
+# bce_val = BinaryCrossentropy()
+# bce_val.subscribe(console_val)
 # rocauc_val = RocAuc()
 # rocauc_val.subscribe(console_val)
 
-TRAINER = Trainer(
+TRAINER = Trainer2(
     loader=train_loader,
     optimizer=optimizer,
     loss_fn=loss_fn,
-    batch_metrics=bce_train_batch,
+    batch_reporters=tbscalar_reporter,
     # epoch_metrics=rocauc_train
-    epoch_metrics=bce_train,
+    # epoch_metrics=bce_train,
 )
 
-VAL = Validator(
+VAL = Validator2(
     loader=val_loader,
-    batch_metrics=[],
-    epoch_metrics=bce_val
+    batch_reporters=[],
+    epoch_reporters=console_reporter
 )
 
-RUNNER = Runner(
+RUNNER = Runner2(
     model=model,
     trainer=TRAINER,
-    validator=VAL
+    run_reporters=tbhparam_reporter
+    # validator=VAL
 )
 
-RUNNER.run(3)
+RUNNER.run(4)
 
 #####################################
 for num_experiment, experiment in enumerate(hyper.get_experiment()):
@@ -210,7 +222,3 @@ get_submission(
 
 del(TRAINER)
 importlib.reload(tinydl.runner_mediator)
-
-
-#############################
-# metric2 and reporter2
