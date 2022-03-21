@@ -19,10 +19,6 @@ from santander.model import NN2
 
 # Dataset
 train_ds, val_ds, test_ds, test_ids = get_data(
-    train="files/aug_train.csv",
-    test="files/aug_test.csv",
-    submission=True)
-train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/tiny_train.csv",
     test="files/tiny_test.csv",
     submission=True)
@@ -32,10 +28,6 @@ loss_fn = nn.BCELoss()
 
 
 # Hyperparameters
-hparam = {
-    "batchsize": [128, 1024],
-    "lr": [2e-3, 2e-4]
-}
 hparam = {
     "batchsize": [128],
     "lr": [2e-4]
@@ -69,36 +61,14 @@ bce_train_batch = BinaryCrossentropy2()
 # console_reporter = ConsoleReporter2()
 # console_reporter.subscribe(bce_train_batch)
 tbscalar_reporter = TensorboardScalarReporter2(
-    stage=Stage.TRAIN, hparam=hparam)
+    stage=Stage.TRAIN, hparam=experiment)
 tbscalar_reporter.subscribe(bce_train_batch)
 
 bce_train_hparam = BinaryCrossentropy2()
 tbhparam_reporter = TensorboardHparamReporter2(
-    stage=Stage.TRAIN, hparam=hparam)
+    stage=Stage.TRAIN, hparam=experiment)
 tbhparam_reporter.subscribe(bce_train_hparam)
 
-
-# console_train = ConsoleReporter2(name="Train")
-# tb_train = TensorboardHparamReporter2(name="Train", hparam=experiment)
-# tb_scalar_train = TensorboardScalarReporter2(name="Train", hparam=experiment)
-
-# rocauc_train = RocAuc2()
-# rocauc_train.subscribe(console_train)
-# rocauc_train.subscribe(tb_train)
-
-# bce_train = BinaryCrossentropy2()
-# bce_train.subscribe(console_train)
-
-# bce_train_batch = BinaryCrossentropy2()
-# bce_train_batch.subscribe(tb_scalar_train)
-# bce_train_batch.subscribe(tb_train)
-
-
-# console_val = ConsoleReporter(name="Valid")
-# bce_val = BinaryCrossentropy()
-# bce_val.subscribe(console_val)
-# rocauc_val = RocAuc()
-# rocauc_val.subscribe(console_val)
 
 TRAINER = Trainer2(
     loader=train_loader,
@@ -109,17 +79,10 @@ TRAINER = Trainer2(
     # epoch_metrics=bce_train,
 )
 
-VAL = Validator2(
-    loader=val_loader,
-    batch_reporters=[],
-    epoch_reporters=console_reporter
-)
-
 RUNNER = Runner2(
     model=model,
     trainer=TRAINER,
-    run_reporters=tbhparam_reporter
-    # validator=VAL
+    # run_reporters=tbhparam_reporter
 )
 
 RUNNER.run(4)
