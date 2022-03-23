@@ -63,16 +63,20 @@ optimizer = optim.Adam(
 )
 
 bce_train_batch = BinaryCrossentropy2()
+rocauc_train_batch = RocAuc2()
 # console_reporter = ConsoleReporter2()
 # console_reporter.subscribe(bce_train_batch)
 tbscalar_reporter = TensorboardScalarReporter2(
     stage=Stage.TRAIN, hparam=experiment)
 tbscalar_reporter.subscribe(bce_train_batch)
+tbscalar_reporter.subscribe(rocauc_train_batch)
 
 bce_train_hparam = BinaryCrossentropy2()
+rocauc_train_hparam = RocAuc2()
 tbhparam_reporter = TensorboardHparamReporter2(
     stage=Stage.TRAIN, hparam=experiment)
 tbhparam_reporter.subscribe(bce_train_hparam)
+tbhparam_reporter.subscribe(rocauc_train_hparam)
 
 
 TRAINER = Trainer2(
