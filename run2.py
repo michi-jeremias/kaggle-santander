@@ -6,10 +6,10 @@ import importlib
 import torch.nn as nn
 import torch.optim as optim
 from tinydl.hyperparameter import Hyperparameter
-from tinydl.metric2 import BinaryCrossentropy2, RocAuc2
+from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
-from tinydl.reporter2 import ConsoleReporter2, TensorboardHparamReporter2, TensorboardScalarReporter2
-from tinydl.runner2 import Runner2, Trainer2, Validator2
+from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter, TensorboardScalarReporter
+from tinydl.runner import Runner, Trainer, Validator
 from tinydl.stage import Stage
 from torch.utils.data import DataLoader
 
@@ -62,24 +62,25 @@ optimizer = optim.Adam(
     weight_decay=1e-4
 )
 
-bce_train_batch = BinaryCrossentropy2()
-rocauc_train_batch = RocAuc2()
+bce_train_batch = BinaryCrossentropy()
+rocauc_train_batch = RocAuc()
 # console_reporter = ConsoleReporter2()
 # console_reporter.subscribe(bce_train_batch)
-tbscalar_reporter = TensorboardScalarReporter2(
+console_reporter = ConsoleReporter()
+tbscalar_reporter = TensorboardScalarReporter(
     stage=Stage.TRAIN, hparam=experiment)
 tbscalar_reporter.subscribe(bce_train_batch)
 tbscalar_reporter.subscribe(rocauc_train_batch)
 
-bce_train_hparam = BinaryCrossentropy2()
-rocauc_train_hparam = RocAuc2()
-tbhparam_reporter = TensorboardHparamReporter2(
+bce_train_hparam = BinaryCrossentropy()
+rocauc_train_hparam = RocAuc()
+tbhparam_reporter = TensorboardHparamReporter(
     stage=Stage.TRAIN, hparam=experiment)
 tbhparam_reporter.subscribe(bce_train_hparam)
 tbhparam_reporter.subscribe(rocauc_train_hparam)
 
 
-TRAINER = Trainer2(
+TRAINER = Trainer(
     loader=train_loader,
     optimizer=optimizer,
     loss_fn=loss_fn,
@@ -88,98 +89,13 @@ TRAINER = Trainer2(
     # epoch_metrics=bce_train,
 )
 
-RUNNER = Runner2(
+RUNNER = Runner(
     model=model,
     trainer=TRAINER,
     run_reporters=tbhparam_reporter
 )
 
 RUNNER.run(4)
-
-#####################################
-for num_experiment, experiment in enumerate(hyperparameter.get_experiment()):
-    print(f"Experiment: {num_experiment+1}, Config: {experiment}")
-
-    # DataLoader
-    train_loader = DataLoader(
-        dataset=train_ds,
-        batch_size=experiment["batchsize"],
-        shuffle=True)
-    val_loader = DataLoader(
-        dataset=val_ds,
-        batch_size=experiment["batchsize"])
-    test_loader = DataLoader(
-        dataset=test_ds,
-        batch_size=experiment["batchsize"])
-
-    # Model, Optimizer
-    model = NN2(input_size=400, hidden_dim=100)
-    init_xavier(model)
-    optimizer = optim.Adam(
-        params=model.parameters(),
-        lr=experiment["lr"],
-        weight_decay=1e-4
-    )
-
-    # Reporter
-    console_reporter = ConsoleReporter()
-    tensorboard_reporter = TensorboardHparamReporter(hparam=experiment)
-
-    # Metrics
-    bce_train = BinaryCrossentropy()
-    bce_train.subscribe(console_reporter)
-    bce_train.subscribe(tensorboard_reporter)
-
-    rocauc_train = RocAuc()
-    rocauc_train.subscribe(console_reporter)
-
-    bce_val = BinaryCrossentropy()
-    bce_val.subscribe(console_reporter)
-
-    rocauc_val = RocAuc()
-    rocauc_val.subscribe(console_reporter)
-
-    # Trainer, Validator, Runner
-    TRAINER = Trainer(
-        loader=train_loader,
-        optimizer=optimizer,
-        loss_fn=loss_fn,
-        batch_metrics=[],
-        epoch_metrics=[bce_train, rocauc_train],
-    )
-
-    VAL = Validator(
-        loader=val_loader,
-        epoch_metrics=[bce_val, rocauc_val]
-    )
-
-    # RUNNER = Runner(
-    #     model=model,
-    #     trainer=TRAINER,
-    #     validator=VAL
-    # )
-
-    # TRAINER = Trainer(
-    #     loader=train_loader,
-    #     optimizer=optimizer,
-    #     loss_fn=loss_fn,
-    #     batch_metrics=bce_train_batch,
-    #     epoch_metrics=[bce_train, rocauc_train],
-    # )
-
-    # VAL = Validator(
-    #     loader=val_loader,
-    #     batch_metrics=[],
-    #     epoch_metrics=rocauc_val
-    # )
-
-    RUNNER = Runner(
-        model=model,
-        trainer=TRAINER,
-        validator=VAL
-    )
-
-    RUNNER.run(1)
 
 
 # Export
@@ -190,7 +106,3 @@ get_submission(
     # device="cuda",
     device="cpu",
     filename="sub-20211122.csv")
-
-
-del(TRAINER)
-importlib.reload(tinydl.runner_mediator)
