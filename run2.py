@@ -29,14 +29,19 @@ loss_fn = nn.BCELoss()
 
 # Hyperparameters
 hparam = {
+    "batchsize": [128, 1024],
+    "lr": [2e-3, 2e-4]
+}
+hparam = {
     "batchsize": [128],
     "lr": [2e-4]
 }
 
-hyper = Hyperparameter(hparam)
+hyperparameter = Hyperparameter(hparam)
 
 #################
-experiment = next(hyper.get_experiment())
+
+experiment = next(hyperparameter.get_experiments())
 
 train_loader = DataLoader(
     dataset=train_ds,
@@ -82,13 +87,13 @@ TRAINER = Trainer2(
 RUNNER = Runner2(
     model=model,
     trainer=TRAINER,
-    # run_reporters=tbhparam_reporter
+    run_reporters=tbhparam_reporter
 )
 
 RUNNER.run(4)
 
 #####################################
-for num_experiment, experiment in enumerate(hyper.get_experiment()):
+for num_experiment, experiment in enumerate(hyperparameter.get_experiment()):
     print(f"Experiment: {num_experiment+1}, Config: {experiment}")
 
     # DataLoader
