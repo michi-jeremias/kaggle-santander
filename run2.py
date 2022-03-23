@@ -1,8 +1,6 @@
 """Kaggle competition: Santander customer transaction prediction"""
 
 # Imports
-import importlib
-
 import torch.nn as nn
 import torch.optim as optim
 from tinydl.hyperparameter import Hyperparameter
@@ -64,27 +62,27 @@ optimizer = optim.Adam(
 
 bce_train_batch = BinaryCrossentropy()
 rocauc_train_batch = RocAuc()
-# console_reporter = ConsoleReporter2()
-# console_reporter.subscribe(bce_train_batch)
+
+ConsoleReporter().add(bce_train_batch)
+
 console_reporter = ConsoleReporter()
-tbscalar_reporter = TensorboardScalarReporter(
-    stage=Stage.TRAIN, hparam=experiment)
-tbscalar_reporter.subscribe(bce_train_batch)
-tbscalar_reporter.subscribe(rocauc_train_batch)
+console_reporter.add_metric(bce_train_batch)
+tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
+tbscalar_reporter.add_metric(bce_train_batch)
+tbscalar_reporter.add_metric(rocauc_train_batch)
 
 bce_train_hparam = BinaryCrossentropy()
 rocauc_train_hparam = RocAuc()
-tbhparam_reporter = TensorboardHparamReporter(
-    stage=Stage.TRAIN, hparam=experiment)
-tbhparam_reporter.subscribe(bce_train_hparam)
-tbhparam_reporter.subscribe(rocauc_train_hparam)
+tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
+tbhparam_reporter.add_metric(bce_train_hparam)
+tbhparam_reporter.add_metric(rocauc_train_hparam)
 
 
 TRAINER = Trainer(
     loader=train_loader,
     optimizer=optimizer,
     loss_fn=loss_fn,
-    batch_reporters=tbscalar_reporter,
+    batch_reporters=[tbscalar_reporter, console_reporter],
     # epoch_metrics=rocauc_train
     # epoch_metrics=bce_train,
 )
