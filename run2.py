@@ -60,22 +60,17 @@ optimizer = optim.Adam(
     weight_decay=1e-4
 )
 
-bce_train_batch = BinaryCrossentropy()
-rocauc_train_batch = RocAuc()
-
-ConsoleReporter().add(bce_train_batch)
 
 console_reporter = ConsoleReporter()
-console_reporter.add_metric(bce_train_batch)
-tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
-tbscalar_reporter.add_metric(bce_train_batch)
-tbscalar_reporter.add_metric(rocauc_train_batch)
+console_reporter.add_metric(BinaryCrossentropy())
 
-bce_train_hparam = BinaryCrossentropy()
-rocauc_train_hparam = RocAuc()
+tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
+tbscalar_reporter.add_metric(BinaryCrossentropy())
+tbscalar_reporter.add_metric(RocAuc())
+
 tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
-tbhparam_reporter.add_metric(bce_train_hparam)
-tbhparam_reporter.add_metric(rocauc_train_hparam)
+tbhparam_reporter.add_metric(BinaryCrossentropy())
+tbhparam_reporter.add_metric(RocAuc())
 
 
 TRAINER = Trainer(
