@@ -8,7 +8,6 @@ from tinydl.metric import BinaryCrossentropy, RocAuc
 from tinydl.modelinit import init_xavier
 from tinydl.reporter import ConsoleReporter, TensorboardHparamReporter, TensorboardScalarReporter
 from tinydl.runner import Runner, Trainer, Validator
-from tinydl.stage import Stage
 from torch.utils.data import DataLoader
 
 from santander.auxiliary import get_data, get_submission
@@ -41,52 +40,63 @@ hyperparameter = Hyperparameter(hparam)
 
 experiment = next(hyperparameter.get_experiments())
 
-train_loader = DataLoader(
-    dataset=train_ds,
-    batch_size=experiment["batchsize"],
-    shuffle=True)
-val_loader = DataLoader(
-    dataset=val_ds,
-    batch_size=experiment["batchsize"])
-test_loader = DataLoader(
-    dataset=test_ds,
-    batch_size=experiment["batchsize"])
+for experiment in hyperparameter.get_experiments():
 
-model = NN2(input_size=400, hidden_dim=100)
-init_xavier(model)
-optimizer = optim.Adam(
-    params=model.parameters(),
-    lr=experiment["lr"],
-    weight_decay=1e-4
-)
+    train_loader = DataLoader(
+        dataset=train_ds,
+        batch_size=experiment["batchsize"],
+        shuffle=True)
+    val_loader = DataLoader(
+        dataset=val_ds,
+        batch_size=experiment["batchsize"])
+    test_loader = DataLoader(
+        dataset=test_ds,
+        batch_size=experiment["batchsize"])
 
+    model = NN2(input_size=400, hidden_dim=100)
+    init_xavier(model)
+    optimizer = optim.Adam(
+        params=model.parameters(),
+        lr=experiment["lr"],
+        weight_decay=1e-4
+    )
 
-console_reporter = ConsoleReporter()
-console_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
+    console_reporter = ConsoleReporter()
+    console_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
 
-tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
-tbscalar_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
+    tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
+    tbscalar_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
 
-tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
-tbhparam_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
+    console_reporter_val = ConsoleReporter()
+    console_reporter_val.add_metrics(BinaryCrossentropy())
 
+    tbscalar_reporter_val = TensorboardScalarReporter(hparam=experiment)
+    tbscalar_reporter_val.add_metrics(BinaryCrossentropy())
 
-TRAINER = Trainer(
-    loader=train_loader,
-    optimizer=optimizer,
-    loss_fn=loss_fn,
-    batch_reporters=[console_reporter, tbscalar_reporter],
-    # epoch_metrics=rocauc_train
-    # epoch_metrics=bce_train,
-)
+    tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
+    tbhparam_reporter.add_metrics([BinaryCrossentropy()])
 
-RUNNER = Runner(
-    model=model,
-    trainer=TRAINER,
-    # run_reporters=tbhparam_reporter
-)
+    TRAINER = Trainer(
+        loader=train_loader,
+        optimizer=optimizer,
+        loss_fn=loss_fn,
+        batch_reporters=tbscalar_reporter,
+        epoch_reporters=console_reporter
+    )
 
-RUNNER.run(4)
+    VALIDATOR = Validator(
+        loader=val_loader,
+        batch_reporters=[console_reporter_val, tbscalar_reporter_val],
+    )
+
+    RUNNER = Runner(
+        model=model,
+        trainer=TRAINER,
+        validator=VALIDATOR,
+        run_reporters=tbhparam_reporter
+    )
+
+    RUNNER.run(4)
 
 
 # Export
