@@ -73,8 +73,8 @@ for experiment in hyperparameter.get_experiments():
     tbscalar_reporter_val = TensorboardScalarReporter(hparam=experiment)
     tbscalar_reporter_val.add_metrics(BinaryCrossentropy())
 
-    # tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
-    # tbhparam_reporter.add_metrics([BinaryCrossentropy()])
+    tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
+    tbhparam_reporter.add_metrics([BinaryCrossentropy()])
 
     TRAINER = Trainer(
         loader=train_loader,
@@ -92,8 +92,8 @@ for experiment in hyperparameter.get_experiments():
     RUNNER = Runner(
         model=model,
         trainer=TRAINER,
-        # validator=VALIDATOR,
-        # run_reporters=tbhparam_reporter
+        validator=VALIDATOR,
+        run_reporters=tbhparam_reporter
     )
 
     RUNNER.run(4)
