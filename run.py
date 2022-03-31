@@ -18,15 +18,16 @@ from santander.model import NN2
 train_ds, val_ds, test_ds, test_ids = get_data(
     train="files/aug_train.csv",
     test="files/aug_test.csv",
-    submission=True)
+    submission=False)  # True sets the ratio of train/test to 0.999, False = 0.8
 
 # Loss function
 loss_fn = nn.BCELoss()
 
 
 # Hyperparameters
+# Best: 256, 2e-5
 hparam = {
-    "batchsize": [128, 256, 512],
+    "batchsize": [128, 256, 512, 1024],
     "lr": [2e-3, 2e-4]
 }
 
@@ -36,6 +37,7 @@ hyperparameter = Hyperparameter(hparam)
 #################
 
 for experiment in hyperparameter.get_experiments():
+    print(f"NEW RUN: {experiment}")
 
     train_loader = DataLoader(
         dataset=train_ds,
@@ -56,20 +58,20 @@ for experiment in hyperparameter.get_experiments():
         weight_decay=1e-4
     )
 
-    console_reporter = ConsoleReporter()
-    console_reporter.add_metrics([BinaryCrossentropy()])
+    # console_reporter = ConsoleReporter()
+    # console_reporter.add_metrics([BinaryCrossentropy()])
 
     tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
-    tbscalar_reporter.add_metrics([BinaryCrossentropy()])
+    tbscalar_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
 
     # console_reporter_val = ConsoleReporter()
     # console_reporter_val.add_metrics(BinaryCrossentropy())
 
     tbscalar_reporter_val = TensorboardScalarReporter(hparam=experiment)
-    tbscalar_reporter_val.add_metrics(BinaryCrossentropy())
+    tbscalar_reporter_val.add_metrics([BinaryCrossentropy(), RocAuc()])
 
     tbhparam_reporter = TensorboardHparamReporter(hparam=experiment)
-    tbhparam_reporter.add_metrics([BinaryCrossentropy()])
+    tbhparam_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
 
     TRAINER = Trainer(
         loader=train_loader,
@@ -91,7 +93,7 @@ for experiment in hyperparameter.get_experiments():
         run_reporters=tbhparam_reporter
     )
 
-    RUNNER.run(4)
+    RUNNER.run(3)
 
 
 # Export
