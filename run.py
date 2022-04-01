@@ -58,14 +58,14 @@ for experiment in hyperparameter.get_experiments():
         weight_decay=1e-4
     )
 
-    # console_reporter = ConsoleReporter()
-    # console_reporter.add_metrics([BinaryCrossentropy()])
+    console_reporter = ConsoleReporter()
+    console_reporter.add_metrics([RocAuc()])
 
     tbscalar_reporter = TensorboardScalarReporter(hparam=experiment)
     tbscalar_reporter.add_metrics([BinaryCrossentropy(), RocAuc()])
 
-    # console_reporter_val = ConsoleReporter()
-    # console_reporter_val.add_metrics(BinaryCrossentropy())
+    console_reporter_val = ConsoleReporter()
+    console_reporter_val.add_metrics(RocAuc())
 
     tbscalar_reporter_val = TensorboardScalarReporter(hparam=experiment)
     tbscalar_reporter_val.add_metrics([BinaryCrossentropy(), RocAuc()])
@@ -78,7 +78,7 @@ for experiment in hyperparameter.get_experiments():
         optimizer=optimizer,
         loss_fn=loss_fn,
         batch_reporters=tbscalar_reporter,
-        # epoch_reporters=console_reporter
+        epoch_reporters=console_reporter
     )
 
     VALIDATOR = Validator(
